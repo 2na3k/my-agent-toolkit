@@ -4,7 +4,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch, mock_open
 
-from src.agents.config_loader import ConfigLoader
+from src.core.config_loader import ConfigLoader
 
 
 class TestConfigLoader:
@@ -18,7 +18,7 @@ class TestConfigLoader:
     def test_init_with_default_path(self):
         """Test initialization with default config path."""
         loader = ConfigLoader()
-        expected_path = Path(__file__).parent.parent.parent / "config.yaml"
+        expected_path = Path(__file__).parent.parent / "config.yaml"
         assert loader.config_path == expected_path
 
     def test_load_config_success(self, temp_config_file):

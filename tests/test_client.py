@@ -2,15 +2,15 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock, PropertyMock
 from openai import OpenAI
 
-from src.agents.client import AIClientWrapper, ClientFactory
-from src.agents.config_loader import ConfigLoader
+from src.core.client import AIClientWrapper, ClientFactory
+from src.core.config_loader import ConfigLoader
 
 
 class TestAIClientWrapper:
     """Test suite for AIClientWrapper class."""
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_init_with_default_provider(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test initialization with default provider."""
         mock_client = Mock()
@@ -23,8 +23,8 @@ class TestAIClientWrapper:
         mock_openai_class.assert_called_once()
         mock_load_dotenv.assert_called_once()
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_init_with_specific_provider(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test initialization with specific provider."""
         mock_client = Mock()
@@ -38,8 +38,8 @@ class TestAIClientWrapper:
         call_kwargs = mock_openai_class.call_args[1]
         assert call_kwargs['base_url'] == "https://generativelanguage.googleapis.com/v1beta/openai/"
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_init_with_custom_kwargs(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test initialization with custom kwargs."""
         mock_client = Mock()
@@ -56,8 +56,8 @@ class TestAIClientWrapper:
         assert call_kwargs['timeout'] == 120
         assert call_kwargs['max_retries'] == 5
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_chat_completion_with_defaults(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars, mock_openai_response):
         """Test chat completion with default parameters."""
         mock_client = Mock()
@@ -77,8 +77,8 @@ class TestAIClientWrapper:
         assert call_kwargs['stream'] is False
         assert call_kwargs['messages'] == messages
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_chat_completion_with_custom_params(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars, mock_openai_response):
         """Test chat completion with custom parameters."""
         mock_client = Mock()
@@ -101,8 +101,8 @@ class TestAIClientWrapper:
         assert call_kwargs['temperature'] == 0.5
         assert call_kwargs['max_tokens'] == 2000
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_chat_completion_stream(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars, mock_stream_response):
         """Test streaming chat completion."""
         mock_client = Mock()
@@ -117,8 +117,8 @@ class TestAIClientWrapper:
         call_kwargs = mock_client.chat.completions.create.call_args[1]
         assert call_kwargs['stream'] is True
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_get_available_models(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test getting available models."""
         mock_client = Mock()
@@ -131,8 +131,8 @@ class TestAIClientWrapper:
         assert 'claude-opus-4' in models
         assert 'claude-haiku-3-5' in models
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_get_default_model(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test getting default model."""
         mock_client = Mock()
@@ -143,8 +143,8 @@ class TestAIClientWrapper:
 
         assert default_model == 'gpt-4o'
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_switch_provider(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test switching between providers."""
         mock_client = Mock()
@@ -157,8 +157,8 @@ class TestAIClientWrapper:
         assert wrapper.provider == 'openai'
         assert wrapper.get_default_model() == 'gpt-4o'
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_current_provider_property(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test current_provider property."""
         mock_client = Mock()
@@ -167,8 +167,8 @@ class TestAIClientWrapper:
         wrapper = AIClientWrapper(provider='gemini', config_path=temp_config_file)
         assert wrapper.current_provider == 'gemini'
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_base_url_property(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test base_url property."""
         mock_client = Mock()
@@ -177,8 +177,8 @@ class TestAIClientWrapper:
         wrapper = AIClientWrapper(provider='claude', config_path=temp_config_file)
         assert wrapper.base_url == "https://api.anthropic.com/v1/"
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_repr(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test string representation."""
         mock_client = Mock()
@@ -220,8 +220,8 @@ class TestClientFactory:
         assert 'gemini-3-flash-preview' in all_models['gemini']
         assert 'gpt-4o' in all_models['openai']
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_client_default(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test creating client with default provider."""
         mock_client = Mock()
@@ -233,8 +233,8 @@ class TestClientFactory:
         assert isinstance(wrapper, AIClientWrapper)
         assert wrapper.provider == 'claude'
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_client_specific_provider(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test creating client with specific provider."""
         mock_client = Mock()
@@ -252,8 +252,8 @@ class TestClientFactory:
         with pytest.raises(ValueError, match="Provider 'invalid' not found"):
             factory.create_client(provider='invalid')
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_all_clients(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test creating clients for all providers."""
         mock_client = Mock()
@@ -269,8 +269,8 @@ class TestClientFactory:
         assert isinstance(clients['gemini'], AIClientWrapper)
         assert isinstance(clients['openai'], AIClientWrapper)
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_all_clients_with_failure(self, mock_openai_class, mock_load_dotenv, temp_config_file, monkeypatch, capsys):
         """Test creating all clients when one fails."""
         mock_client = Mock()
@@ -291,8 +291,8 @@ class TestClientFactory:
         captured = capsys.readouterr()
         assert "Warning" in captured.out or "gemini" in captured.out.lower()
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_client_for_model(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test creating client based on model name."""
         mock_client = Mock()
@@ -303,8 +303,8 @@ class TestClientFactory:
 
         assert wrapper.provider == 'claude'
 
-    @patch('src.agents.client.load_dotenv')
-    @patch('src.agents.client.OpenAI')
+    @patch('src.core.client.load_dotenv')
+    @patch('src.core.client.OpenAI')
     def test_create_client_for_model_gemini(self, mock_openai_class, mock_load_dotenv, temp_config_file, mock_env_vars):
         """Test creating client for Gemini model."""
         mock_client = Mock()

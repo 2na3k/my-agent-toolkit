@@ -1,12 +1,12 @@
 from enum import Enum
 from typing import List
 
-class BasedEnum(Enum, str):
+class BasedEnum(str, Enum):
     @classmethod
     def as_list(cls) -> List[str]:
         """
         Returns all attribute names (member names) of this Enum.
-        
+
         Returns:
             List of attribute names
         """
