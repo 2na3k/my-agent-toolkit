@@ -1,0 +1,39 @@
+# AI Provider Configuration
+providers:
+  claude:
+    base_url: "https://api.anthropic.com/v1/"
+    default_model: "claude-sonnet-4-5"
+    models:
+      - "claude-sonnet-4-5"
+      - "claude-opus-4"
+      - "claude-haiku-3-5"
+    timeout: 60
+    max_retries: 3
+
+  gemini:
+    base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+    default_model: "gemini-3-flash-preview"
+    models:
+      - "gemini-3-flash-preview"
+      - "gemini-2.0-flash-exp"
+    timeout: 60
+    max_retries: 3
+
+  openai:
+    base_url: "https://api.openai.com/v1/"
+    default_model: "gpt-4o"
+    models:
+      - "gpt-4o"
+      - "gpt-4o-mini"
+      - "gpt-4-turbo"
+    timeout: 60
+    max_retries: 3
+
+# Default provider to use
+default_provider: "claude"
+
+# Global settings
+settings:
+  temperature: 0.7
+  max_tokens: 4096
+  stream: false
