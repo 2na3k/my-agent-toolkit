@@ -5,8 +5,8 @@ from src.core import BaseAgent, register_agent
 
 @register_agent(
     "hello_agent",
-    patterns=[r".*"],  # Match everything for now (will be more specific later)
-    keywords=["hello", "hi", "greet", "greeting"],
+    patterns=[r"^hello\b", r"^hi\b", r"^hey\b", r"greet", r"say hello"],
+    keywords=["hello", "hi", "greet", "greeting", "hey"],
     description="A simple agent that always returns 'hello'",
     priority=0,
 )
