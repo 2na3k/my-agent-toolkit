@@ -35,9 +35,7 @@ class RouteExecutor:
         try:
             # Create agent via factory
             agent = AgentFactory.create(
-                agent_type=agent_type,
-                name=f"routed_{agent_type}",
-                **kwargs
+                agent_type=agent_type, name=f"routed_{agent_type}", **kwargs
             )
 
             self.logger.info(f"Executing agent: {agent_type}")

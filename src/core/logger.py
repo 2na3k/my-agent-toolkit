@@ -3,9 +3,7 @@ from typing import Optional
 
 
 def get_logger(
-    name: str,
-    level: int = logging.INFO,
-    format_string: Optional[str] = None
+    name: str, level: int = logging.INFO, format_string: Optional[str] = None
 ) -> logging.Logger:
     """
     Get a configured logger instance.
@@ -35,12 +33,9 @@ def get_logger(
 
         # Create formatter
         if format_string is None:
-            format_string = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            format_string = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-        formatter = logging.Formatter(
-            fmt=format_string,
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
+        formatter = logging.Formatter(fmt=format_string, datefmt="%Y-%m-%d %H:%M:%S")
         console_handler.setFormatter(formatter)
 
         # Add handler to logger

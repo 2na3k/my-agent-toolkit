@@ -9,7 +9,9 @@ from .strategies.metadata import MetadataBasedStrategy
 class RoutingEngine:
     """Orchestrates routing strategies to determine which agent handles input."""
 
-    def __init__(self, default_agent: str = "hello_agent", confidence_threshold: float = 0.5):
+    def __init__(
+        self, default_agent: str = "hello_agent", confidence_threshold: float = 0.5
+    ):
         """
         Initialize routing engine.
 
@@ -23,7 +25,7 @@ class RoutingEngine:
 
         # Initialize strategies
         self.strategies = {
-            'metadata': MetadataBasedStrategy(),
+            "metadata": MetadataBasedStrategy(),
             # Future: 'llm_intent': LLMIntentStrategy()
         }
 
@@ -46,7 +48,7 @@ class RoutingEngine:
         context = context or {}
 
         # Try metadata strategy first
-        match = self.strategies['metadata'].match(input_data, context)
+        match = self.strategies["metadata"].match(input_data, context)
 
         if match.agent_type and match.confidence >= self.confidence_threshold:
             self.logger.info(
@@ -66,10 +68,10 @@ class RoutingEngine:
             route_match=RouteMatch(
                 agent_type=self.default_agent,
                 confidence=0.5,
-                metadata={'fallback': True, 'reason': 'no_match'},
-                strategy_name='default'
+                metadata={"fallback": True, "reason": "no_match"},
+                strategy_name="default",
             ),
-            fallback_agent=self.default_agent
+            fallback_agent=self.default_agent,
         )
 
     def add_strategy(self, name: str, strategy):

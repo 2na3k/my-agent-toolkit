@@ -8,7 +8,7 @@ from src.core import BaseAgent, register_agent
     patterns=[r".*"],  # Match everything for now (will be more specific later)
     keywords=["hello", "hi", "greet", "greeting"],
     description="A simple agent that always returns 'hello'",
-    priority=0
+    priority=0,
 )
 class HelloAgent(BaseAgent):
     """
@@ -24,7 +24,7 @@ class HelloAgent(BaseAgent):
         provider: Optional[str] = None,
         model: Optional[str] = None,
         config_path: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the Hello Agent.
@@ -38,11 +38,7 @@ class HelloAgent(BaseAgent):
         """
         # Initialize base agent (even though we won't use the AI client)
         super().__init__(
-            name=name,
-            provider=provider,
-            model=model,
-            config_path=config_path,
-            **kwargs
+            name=name, provider=provider, model=model, config_path=config_path, **kwargs
         )
 
         self.logger.info("HelloAgent initialized - will always return 'hello'")

@@ -50,7 +50,7 @@ settings:
 @pytest.fixture
 def temp_config_file(mock_config_yaml):
     """Fixture providing a temporary config file."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write(mock_config_yaml)
         temp_path = f.name
 
@@ -76,19 +76,17 @@ def mock_openai_response():
         "object": "chat.completion",
         "created": 1677652288,
         "model": "claude-sonnet-4-5",
-        "choices": [{
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": "This is a mock response from the AI."
-            },
-            "finish_reason": "stop"
-        }],
-        "usage": {
-            "prompt_tokens": 10,
-            "completion_tokens": 20,
-            "total_tokens": 30
-        }
+        "choices": [
+            {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": "This is a mock response from the AI.",
+                },
+                "finish_reason": "stop",
+            }
+        ],
+        "usage": {"prompt_tokens": 10, "completion_tokens": 20, "total_tokens": 30},
     }
 
 
@@ -96,7 +94,16 @@ def mock_openai_response():
 def mock_stream_response():
     """Fixture providing a mock streaming response."""
     return [
-        {"id": "chatcmpl-123", "choices": [{"delta": {"content": "Hello"}, "index": 0}]},
-        {"id": "chatcmpl-123", "choices": [{"delta": {"content": " world"}, "index": 0}]},
-        {"id": "chatcmpl-123", "choices": [{"delta": {}, "index": 0, "finish_reason": "stop"}]},
+        {
+            "id": "chatcmpl-123",
+            "choices": [{"delta": {"content": "Hello"}, "index": 0}],
+        },
+        {
+            "id": "chatcmpl-123",
+            "choices": [{"delta": {"content": " world"}, "index": 0}],
+        },
+        {
+            "id": "chatcmpl-123",
+            "choices": [{"delta": {}, "index": 0, "finish_reason": "stop"}],
+        },
     ]

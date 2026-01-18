@@ -36,7 +36,7 @@ class ConfigLoader:
         if not self.config_path.exists():
             raise FileNotFoundError(f"Config file not found: {self.config_path}")
 
-        with open(self.config_path, 'r') as f:
+        with open(self.config_path, "r") as f:
             self._config = yaml.safe_load(f)
 
         return self._config
@@ -61,7 +61,7 @@ class ConfigLoader:
         Raises:
             ValueError: If provider not found in config
         """
-        providers = self.config.get('providers', {})
+        providers = self.config.get("providers", {})
         if provider not in providers:
             raise ValueError(
                 f"Provider '{provider}' not found in config. "
@@ -72,11 +72,11 @@ class ConfigLoader:
 
     def get_default_provider(self) -> str:
         """Get the default provider name from config."""
-        return self.config.get('default_provider', 'claude')
+        return self.config.get("default_provider", "claude")
 
     def get_global_settings(self) -> Dict[str, Any]:
         """Get global settings from config."""
-        return self.config.get('settings', {})
+        return self.config.get("settings", {})
 
     def get_api_key(self, provider: str) -> str:
         """
@@ -93,9 +93,9 @@ class ConfigLoader:
         """
         # Map provider names to environment variable names
         env_var_map = {
-            'claude': 'ANTHROPIC_API_KEY',
-            'gemini': 'GEMINI_API_KEY',
-            'openai': 'OPENAI_API_KEY'
+            "claude": "ANTHROPIC_API_KEY",
+            "gemini": "GEMINI_API_KEY",
+            "openai": "OPENAI_API_KEY",
         }
 
         env_var = env_var_map.get(provider.lower())

@@ -22,7 +22,7 @@ class BaseAgent(ABC):
         provider: Optional[str] = None,
         model: Optional[str] = None,
         config_path: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the base agent.
@@ -46,9 +46,7 @@ class BaseAgent(ABC):
         # Initialize AI client
         try:
             self.client = AIClientWrapper(
-                provider=provider,
-                config_path=config_path,
-                **kwargs
+                provider=provider, config_path=config_path, **kwargs
             )
             self.logger.info(
                 f"AI client initialized - Provider: {self.client.current_provider}, "
@@ -82,7 +80,7 @@ class BaseAgent(ABC):
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Send a chat message to the AI model.
@@ -112,7 +110,7 @@ class BaseAgent(ABC):
                 temperature=temperature,
                 max_tokens=max_tokens,
                 stream=stream,
-                **kwargs
+                **kwargs,
             )
 
             # Store in history
@@ -130,7 +128,11 @@ class BaseAgent(ABC):
 
         # Add history (keep last N messages to avoid token limits)
         max_history = 10
-        recent_history = self.history[-max_history:] if len(self.history) > max_history else self.history
+        recent_history = (
+            self.history[-max_history:]
+            if len(self.history) > max_history
+            else self.history
+        )
 
         for entry in recent_history:
             messages.append({"role": "user", "content": entry["user"]})
@@ -147,7 +149,7 @@ class BaseAgent(ABC):
         entry = {"user": user_message}
 
         # Extract assistant message from response
-        if hasattr(response, 'choices') and response.choices:
+        if hasattr(response, "choices") and response.choices:
             assistant_message = response.choices[0].message.content
             entry["assistant"] = assistant_message
 
@@ -179,7 +181,9 @@ class BaseAgent(ABC):
             provider: Provider name ('claude', 'gemini', 'openai')
             **kwargs: Additional arguments for the client
         """
-        self.logger.info(f"Switching provider from {self.client.current_provider} to {provider}")
+        self.logger.info(
+            f"Switching provider from {self.client.current_provider} to {provider}"
+        )
         self.client.switch_provider(provider, **kwargs)
         self.provider = provider
 
@@ -215,7 +219,12 @@ class AgentFactory:
     _agent_metadata: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
-    def register(cls, agent_type: str, agent_class: Type[BaseAgent], metadata: Optional[Dict] = None):
+    def register(
+        cls,
+        agent_type: str,
+        agent_class: Type[BaseAgent],
+        metadata: Optional[Dict] = None,
+    ):
         """
         Register an agent class with optional routing metadata.
 
@@ -238,7 +247,7 @@ class AgentFactory:
         provider: Optional[str] = None,
         model: Optional[str] = None,
         config_path: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> BaseAgent:
         """
         Create an agent instance.
@@ -271,7 +280,7 @@ class AgentFactory:
             provider=provider,
             model=model,
             config_path=config_path,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -281,7 +290,7 @@ class AgentFactory:
         model_name: str,
         name: Optional[str] = None,
         config_path: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> BaseAgent:
         """
         Create an agent instance with automatic provider detection based on model.
@@ -309,7 +318,7 @@ class AgentFactory:
             provider=provider,
             model=model_name,
             config_path=config_path,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -385,7 +394,7 @@ class AgentFactory:
         return {
             agent_type: metadata
             for agent_type, metadata in cls._agent_metadata.items()
-            if metadata.get('enabled', True)
+            if metadata.get("enabled", True)
         }
 
 
@@ -396,7 +405,7 @@ def register_agent(
     keywords: Optional[List[str]] = None,
     description: Optional[str] = None,
     priority: int = 0,
-    enabled: bool = True
+    enabled: bool = True,
 ):
     """
     Decorator to register an agent class with routing metadata.
@@ -420,14 +429,15 @@ def register_agent(
         >>>     def run(self, input_data, **kwargs):
         >>>         return "hello"
     """
+
     def decorator(agent_class: Type[BaseAgent]):
         # Store routing metadata
         metadata = {
-            'patterns': patterns or [],
-            'keywords': keywords or [],
-            'description': description or agent_class.__doc__ or '',
-            'priority': priority,
-            'enabled': enabled
+            "patterns": patterns or [],
+            "keywords": keywords or [],
+            "description": description or agent_class.__doc__ or "",
+            "priority": priority,
+            "enabled": enabled,
         }
 
         # Register with factory (existing behavior)

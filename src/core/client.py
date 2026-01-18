@@ -19,7 +19,7 @@ class AIClientWrapper:
         self,
         provider: Optional[str] = None,
         config_path: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Initialize the AI client wrapper.
@@ -45,10 +45,12 @@ class AIClientWrapper:
 
         # Initialize OpenAI client with provider-specific settings
         client_kwargs = {
-            'api_key': self.api_key,
-            'base_url': self.provider_config['base_url'],
-            'timeout': kwargs.get('timeout', self.provider_config.get('timeout', 60)),
-            'max_retries': kwargs.get('max_retries', self.provider_config.get('max_retries', 3)),
+            "api_key": self.api_key,
+            "base_url": self.provider_config["base_url"],
+            "timeout": kwargs.get("timeout", self.provider_config.get("timeout", 60)),
+            "max_retries": kwargs.get(
+                "max_retries", self.provider_config.get("max_retries", 3)
+            ),
         }
 
         # Add any additional kwargs
@@ -68,7 +70,7 @@ class AIClientWrapper:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,
-        **kwargs
+        **kwargs,
     ) -> Any:
         """
         Create a chat completion.
@@ -85,10 +87,16 @@ class AIClientWrapper:
             Chat completion response
         """
         # Use defaults from config if not provided
-        model = model or self.provider_config['default_model']
-        temperature = temperature if temperature is not None else self.global_settings.get('temperature', 0.7)
-        max_tokens = max_tokens or self.global_settings.get('max_tokens', 4096)
-        stream = stream if stream is not None else self.global_settings.get('stream', False)
+        model = model or self.provider_config["default_model"]
+        temperature = (
+            temperature
+            if temperature is not None
+            else self.global_settings.get("temperature", 0.7)
+        )
+        max_tokens = max_tokens or self.global_settings.get("max_tokens", 4096)
+        stream = (
+            stream if stream is not None else self.global_settings.get("stream", False)
+        )
 
         return self.client.chat.completions.create(
             model=model,
@@ -96,7 +104,7 @@ class AIClientWrapper:
             temperature=temperature,
             max_tokens=max_tokens,
             stream=stream,
-            **kwargs
+            **kwargs,
         )
 
     def chat_completion_stream(
@@ -105,7 +113,7 @@ class AIClientWrapper:
         model: Optional[str] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Create a streaming chat completion.
@@ -126,7 +134,7 @@ class AIClientWrapper:
             temperature=temperature,
             max_tokens=max_tokens,
             stream=True,
-            **kwargs
+            **kwargs,
         )
 
     def get_available_models(self) -> List[str]:
@@ -136,7 +144,7 @@ class AIClientWrapper:
         Returns:
             List of model names
         """
-        return self.provider_config.get('models', [])
+        return self.provider_config.get("models", [])
 
     def get_default_model(self) -> str:
         """
@@ -145,7 +153,7 @@ class AIClientWrapper:
         Returns:
             Default model name
         """
-        return self.provider_config['default_model']
+        return self.provider_config["default_model"]
 
     def switch_provider(self, provider: str, **kwargs):
         """
@@ -155,7 +163,9 @@ class AIClientWrapper:
             provider: Provider name ('claude', 'gemini', or 'openai')
             **kwargs: Additional arguments to pass to OpenAI client
         """
-        self.__init__(provider=provider, config_path=self.config_loader.config_path, **kwargs)
+        self.__init__(
+            provider=provider, config_path=self.config_loader.config_path, **kwargs
+        )
 
     @property
     def current_provider(self) -> str:
@@ -165,7 +175,7 @@ class AIClientWrapper:
     @property
     def base_url(self) -> str:
         """Get the base URL for the current provider."""
-        return self.provider_config['base_url']
+        return self.provider_config["base_url"]
 
     def __repr__(self) -> str:
         return (
@@ -194,7 +204,7 @@ class ClientFactory:
         Returns:
             List of provider names
         """
-        providers = self.config_loader.config.get('providers', {})
+        providers = self.config_loader.config.get("providers", {})
         return list(providers.keys())
 
     def get_all_models(self) -> Dict[str, List[str]]:
@@ -204,16 +214,13 @@ class ClientFactory:
         Returns:
             Dictionary mapping provider names to their available models
         """
-        providers = self.config_loader.config.get('providers', {})
+        providers = self.config_loader.config.get("providers", {})
         return {
-            provider: config.get('models', [])
-            for provider, config in providers.items()
+            provider: config.get("models", []) for provider, config in providers.items()
         }
 
     def create_client(
-        self,
-        provider: Optional[str] = None,
-        **kwargs
+        self, provider: Optional[str] = None, **kwargs
     ) -> AIClientWrapper:
         """
         Create an AI client wrapper for the specified provider.
@@ -235,9 +242,7 @@ class ClientFactory:
             )
 
         return AIClientWrapper(
-            provider=provider,
-            config_path=self.config_path,
-            **kwargs
+            provider=provider, config_path=self.config_path, **kwargs
         )
 
     def create_all_clients(self, **kwargs) -> Dict[str, AIClientWrapper]:

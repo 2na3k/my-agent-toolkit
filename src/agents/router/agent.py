@@ -11,7 +11,7 @@ from .models import RouteResult
     "router",
     patterns=[],  # Router doesn't route to itself
     description="Routes inputs to specialized agents based on metadata",
-    enabled=False  # Exclude from routing (prevents infinite loop)
+    enabled=False,  # Exclude from routing (prevents infinite loop)
 )
 class RouterAgent(BaseAgent):
     """
@@ -29,20 +29,15 @@ class RouterAgent(BaseAgent):
         config_path: Optional[str] = None,
         default_agent: str = "hello_agent",
         confidence_threshold: float = 0.5,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
-            name=name,
-            provider=provider,
-            model=model,
-            config_path=config_path,
-            **kwargs
+            name=name, provider=provider, model=model, config_path=config_path, **kwargs
         )
 
         # Initialize routing components
         self.engine = RoutingEngine(
-            default_agent=default_agent,
-            confidence_threshold=confidence_threshold
+            default_agent=default_agent, confidence_threshold=confidence_threshold
         )
         self.executor = RouteExecutor()
 
@@ -63,7 +58,7 @@ class RouterAgent(BaseAgent):
             Result from the routed agent
         """
         # Get routing context from kwargs
-        context = kwargs.get('context', {})
+        context = kwargs.get("context", {})
 
         # Determine route
         route_result = self.route(input_data, context)
@@ -102,7 +97,9 @@ class RouterAgent(BaseAgent):
 
         return route_result
 
-    def execute_route(self, route_result: RouteResult, input_data: Any, **kwargs) -> Any:
+    def execute_route(
+        self, route_result: RouteResult, input_data: Any, **kwargs
+    ) -> Any:
         """
         Execute the routed agent.
 
@@ -120,19 +117,19 @@ class RouterAgent(BaseAgent):
         """Store routing information in agent state."""
         if route_result.matched:
             routing_info = {
-                'agent': route_result.route_match.agent_type,
-                'strategy': route_result.route_match.strategy_name,
-                'confidence': route_result.route_match.confidence,
-                'metadata': route_result.route_match.metadata,
-                'is_fallback': route_result.fallback_agent is not None
+                "agent": route_result.route_match.agent_type,
+                "strategy": route_result.route_match.strategy_name,
+                "confidence": route_result.route_match.confidence,
+                "metadata": route_result.route_match.metadata,
+                "is_fallback": route_result.fallback_agent is not None,
             }
-            self.set_state('last_route', routing_info)
+            self.set_state("last_route", routing_info)
 
     def get_routing_stats(self) -> Dict[str, Any]:
         """Get statistics about routing decisions."""
-        last_route = self.get_state('last_route')
+        last_route = self.get_state("last_route")
         return {
-            'last_route': last_route,
-            'available_strategies': list(self.engine.strategies.keys()),
-            'default_agent': self.engine.default_agent
+            "last_route": last_route,
+            "available_strategies": list(self.engine.strategies.keys()),
+            "default_agent": self.engine.default_agent,
         }
