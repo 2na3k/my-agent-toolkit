@@ -1,6 +1,7 @@
 """Main CLI entry point for the agent toolkit."""
 
 import sys
+import subprocess
 from typing import Optional, List
 from pathlib import Path
 
@@ -180,6 +181,49 @@ def version():
     """Show version information."""
     console.print(f"[bold]Agent Toolkit[/bold] v{__version__}")
     console.print("A CLI for AI agent interactions")
+
+
+@app.command()
+def ui(
+    api_only: bool = typer.Option(
+        False,
+        "--api-only",
+        help="Run only the API server",
+    ),
+    ui_only: bool = typer.Option(
+        False,
+        "--ui-only",
+        help="Run only the UI server",
+    ),
+):
+    """Start the web UI and API servers."""
+    try:
+        if api_only and ui_only:
+            console.print("[red]Error: Cannot use --api-only and --ui-only together[/red]")
+            sys.exit(1)
+
+        if api_only:
+            console.print("[bold cyan]Starting API server on http://localhost:8000[/bold cyan]")
+            subprocess.run(["make", "run-api"])
+        elif ui_only:
+            console.print("[bold cyan]Starting UI server on http://localhost:5173[/bold cyan]")
+            subprocess.run(["make", "run-ui"])
+        else:
+            console.print("[bold cyan]Starting both API and UI servers...[/bold cyan]")
+            console.print("  API: http://localhost:8000")
+            console.print("  UI:  http://localhost:5173")
+            console.print()
+            subprocess.run(["make", "run-all"])
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Servers stopped[/yellow]")
+        sys.exit(0)
+    except FileNotFoundError:
+        console.print("[red]Error: 'make' command not found. Please install make.[/red]")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Error starting servers: {e}[/red]")
+        sys.exit(1)
 
 
 def main():
