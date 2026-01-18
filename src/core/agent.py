@@ -212,20 +212,23 @@ class AgentFactory:
     """
 
     _registered_agents: Dict[str, Type[BaseAgent]] = {}
+    _agent_metadata: Dict[str, Dict[str, Any]] = {}
 
     @classmethod
-    def register(cls, agent_type: str, agent_class: Type[BaseAgent]):
+    def register(cls, agent_type: str, agent_class: Type[BaseAgent], metadata: Optional[Dict] = None):
         """
-        Register an agent class.
+        Register an agent class with optional routing metadata.
 
         Args:
             agent_type: Unique identifier for the agent type
             agent_class: Agent class (must inherit from BaseAgent)
+            metadata: Optional routing metadata for the agent
         """
         if not issubclass(agent_class, BaseAgent):
             raise TypeError(f"{agent_class} must inherit from BaseAgent")
 
         cls._registered_agents[agent_type] = agent_class
+        cls._agent_metadata[agent_type] = metadata or {}
 
     @classmethod
     def create(
@@ -342,20 +345,93 @@ class AgentFactory:
         """
         if agent_type in cls._registered_agents:
             del cls._registered_agents[agent_type]
+        if agent_type in cls._agent_metadata:
+            del cls._agent_metadata[agent_type]
+
+    @classmethod
+    def get_metadata(cls, agent_type: str) -> Dict[str, Any]:
+        """
+        Get routing metadata for an agent.
+
+        Args:
+            agent_type: Agent type to get metadata for
+
+        Returns:
+            Agent metadata dictionary
+        """
+        return cls._agent_metadata.get(agent_type, {})
+
+    @classmethod
+    def get_all_metadata(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Get routing metadata for all registered agents.
+
+        Returns:
+            Dictionary mapping agent types to their metadata
+        """
+        return {
+            agent_type: cls.get_metadata(agent_type)
+            for agent_type in cls._registered_agents.keys()
+        }
+
+    @classmethod
+    def get_routable_agents(cls) -> Dict[str, Dict[str, Any]]:
+        """
+        Get all agents that are enabled for routing.
+
+        Returns:
+            Dictionary mapping agent types to their metadata for enabled agents
+        """
+        return {
+            agent_type: metadata
+            for agent_type, metadata in cls._agent_metadata.items()
+            if metadata.get('enabled', True)
+        }
 
 
 # Decorator for easy agent registration
-def register_agent(agent_type: str):
+def register_agent(
+    agent_type: str,
+    patterns: Optional[List[str]] = None,
+    keywords: Optional[List[str]] = None,
+    description: Optional[str] = None,
+    priority: int = 0,
+    enabled: bool = True
+):
     """
-    Decorator to register an agent class.
+    Decorator to register an agent class with routing metadata.
+
+    Args:
+        agent_type: Unique identifier for the agent
+        patterns: Regex patterns that should route to this agent
+        keywords: Keywords that should route to this agent
+        description: Human-readable description of what this agent does
+        priority: Higher priority agents are checked first (default: 0)
+        enabled: Whether this agent is available for routing (default: True)
 
     Example:
-        >>> @register_agent("research_agent")
-        >>> class ResearchAgent(BaseAgent):
+        >>> @register_agent(
+        >>>     "hello_agent",
+        >>>     patterns=[r"^hello", r"^hi\b", r"greet"],
+        >>>     keywords=["hello", "greeting", "hi"],
+        >>>     description="Handles simple greetings"
+        >>> )
+        >>> class HelloAgent(BaseAgent):
         >>>     def run(self, input_data, **kwargs):
-        >>>         return self.chat(input_data)
+        >>>         return "hello"
     """
     def decorator(agent_class: Type[BaseAgent]):
-        AgentFactory.register(agent_type, agent_class)
+        # Store routing metadata
+        metadata = {
+            'patterns': patterns or [],
+            'keywords': keywords or [],
+            'description': description or agent_class.__doc__ or '',
+            'priority': priority,
+            'enabled': enabled
+        }
+
+        # Register with factory (existing behavior)
+        AgentFactory.register(agent_type, agent_class, metadata=metadata)
         return agent_class
+
     return decorator

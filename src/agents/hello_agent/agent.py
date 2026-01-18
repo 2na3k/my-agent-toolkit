@@ -3,7 +3,13 @@ from typing import Any, Optional
 from src.core import BaseAgent, register_agent
 
 
-@register_agent("hello_agent")
+@register_agent(
+    "hello_agent",
+    patterns=[r".*"],  # Match everything for now (will be more specific later)
+    keywords=["hello", "hi", "greet", "greeting"],
+    description="A simple agent that always returns 'hello'",
+    priority=0
+)
 class HelloAgent(BaseAgent):
     """
     Hello Agent - A simple agent that always returns 'hello'.
