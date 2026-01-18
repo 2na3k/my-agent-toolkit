@@ -314,3 +314,5 @@ docs/_templates/
 *.tar.gz
 *.rar
 *.7z
+
+.ruff_cache
