@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CodeBlock } from '@/components/CodeBlock';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -102,9 +103,13 @@ export default function AgentView() {
                                     ? "bg-gray-100 text-gray-900 rounded-tr-sm"
                                     : "bg-blue-50 text-slate-800 rounded-tl-sm"
                             )}>
-                                <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100">
+                                <div className="prose prose-sm max-w-none prose-p:leading-relaxed">
                                     <ReactMarkdown
                                         remarkPlugins={[remarkGfm]}
+                                        components={{
+                                            code: CodeBlock,
+                                            pre: ({ children }: any) => <>{children}</>,
+                                        }}
                                     >
                                         {msg.content}
                                     </ReactMarkdown>
