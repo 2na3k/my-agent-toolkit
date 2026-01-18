@@ -30,7 +30,7 @@ providers:
     max_retries: 3
 
 # Default provider to use
-default_provider: "claude"
+default_provider: "gemini"
 
 # Global settings
 settings:
