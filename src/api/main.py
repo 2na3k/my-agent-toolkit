@@ -8,10 +8,10 @@ import uuid
 from src.core import AgentFactory, BaseAgent
 # Import all agents to ensure they are registered
 import src.agents
+from src.logger import get_logger
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("api")
+
+logger = get_logger("api")
 
 app = FastAPI(
     title="Agent Toolkit API",
