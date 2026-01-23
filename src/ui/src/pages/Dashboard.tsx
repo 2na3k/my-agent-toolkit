@@ -20,8 +20,8 @@ export default function Dashboard() {
     return (
         <div>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">My Agents</h1>
-                <p className="text-gray-500">Manage and interact with your AI agents.</p>
+                <h1 className="text-3xl font-bold mb-2">Available Agents</h1>
+                <p className="text-gray-500">Choose an agent to start chatting.</p>
             </div>
 
             {loading ? (

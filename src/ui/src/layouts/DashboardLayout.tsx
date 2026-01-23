@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutGrid, Bot, Settings, Search } from 'lucide-react';
+import { MessageSquare, Bot, Settings, Search } from 'lucide-react';
 import clsx from 'clsx';
 
 export function DashboardLayout() {
@@ -19,7 +19,7 @@ function Sidebar() {
     const location = useLocation();
 
     const navItems = [
-        { icon: LayoutGrid, label: 'Dashboard', path: '/' },
+        { icon: MessageSquare, label: 'Chat', path: '/' },
         { icon: Bot, label: 'Agents', path: '/agents' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
