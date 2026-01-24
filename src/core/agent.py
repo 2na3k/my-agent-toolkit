@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List, Type
+from typing import Dict, Any, Optional, List, Type, TYPE_CHECKING
 
 from .client import AIClientWrapper, ClientFactory
 from .logger import get_logger
+
+if TYPE_CHECKING:
+    from .memory import MemoryService
 
 
 class BaseAgent(ABC):
@@ -22,6 +25,8 @@ class BaseAgent(ABC):
         provider: Optional[str] = None,
         model: Optional[str] = None,
         config_path: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        memory_service: Optional["MemoryService"] = None,
         **kwargs,
     ):
         """
@@ -32,12 +37,16 @@ class BaseAgent(ABC):
             provider: AI provider ('claude', 'gemini', 'openai'). If None, uses default.
             model: Model to use. If None, uses provider's default model.
             config_path: Path to config.yaml. If None, uses default location.
+            conversation_id: Optional conversation ID for persistence. If None, no persistence.
+            memory_service: Optional MemoryService for persistence. If None, no persistence.
             **kwargs: Additional arguments passed to the AI client
         """
         self.name = name
         self.provider = provider
         self.model = model
         self.config_path = config_path
+        self.conversation_id = conversation_id
+        self.memory_service = memory_service
 
         # Set up logger
         self.logger = get_logger(f"agent.{name}")
@@ -59,6 +68,54 @@ class BaseAgent(ABC):
         # Agent state
         self.state: Dict[str, Any] = {}
         self.history: List[Dict[str, Any]] = []
+
+        # Load conversation from memory if persistence is enabled
+        if self.conversation_id and self.memory_service:
+            self._load_from_memory()
+
+    def _load_from_memory(self):
+        """Load conversation history and state from memory.
+
+        This method is called during initialization if both conversation_id
+        and memory_service are provided.
+        """
+        if not self.conversation_id or not self.memory_service:
+            return
+
+        try:
+            # Load conversation data
+            data = self.memory_service.load_conversation(self.conversation_id)
+            if not data:
+                self.logger.warning(f"Conversation {self.conversation_id} not found")
+                return
+
+            # Reconstruct history from messages
+            messages = data.get("messages", [])
+            self.history = []
+
+            # Group messages into user-assistant pairs
+            for i in range(0, len(messages), 2):
+                if i + 1 < len(messages):
+                    entry = {
+                        "user": messages[i]["content"],
+                        "assistant": messages[i + 1]["content"],
+                    }
+                    self.history.append(entry)
+                elif messages[i]["role"] == "user":
+                    # Dangling user message without response
+                    self.history.append({"user": messages[i]["content"]})
+
+            # Load agent state
+            self.state = self.memory_service.load_state(self.conversation_id)
+
+            self.logger.info(
+                f"Loaded conversation {self.conversation_id}: "
+                f"{len(self.history)} turns, {len(self.state)} state keys"
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to load from memory: {e}")
+            # Continue with empty history/state rather than failing
 
     @abstractmethod
     def run(self, input_data: Any, **kwargs) -> Any:
@@ -145,15 +202,28 @@ class BaseAgent(ABC):
         return messages
 
     def _update_history(self, user_message: str, response: Any):
-        """Update conversation history."""
+        """Update conversation history and persist if memory_service is available."""
         entry = {"user": user_message}
 
         # Extract assistant message from response
+        assistant_message = None
         if hasattr(response, "choices") and response.choices:
             assistant_message = response.choices[0].message.content
             entry["assistant"] = assistant_message
 
+        # Update in-memory history
         self.history.append(entry)
+
+        # Persist to database if memory service is available
+        if self.memory_service and self.conversation_id and assistant_message:
+            try:
+                self.memory_service.save_turn(
+                    conversation_id=self.conversation_id,
+                    user_message=user_message,
+                    assistant_message=assistant_message,
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to persist conversation turn: {e}")
 
     def clear_history(self):
         """Clear conversation history."""
@@ -161,8 +231,15 @@ class BaseAgent(ABC):
         self.logger.info("Conversation history cleared")
 
     def set_state(self, key: str, value: Any):
-        """Set a state variable."""
+        """Set a state variable and persist if memory_service is available."""
         self.state[key] = value
+
+        # Auto-persist state if memory service is available
+        if self.memory_service and self.conversation_id:
+            try:
+                self.memory_service.db.set_state(self.conversation_id, key, value)
+            except Exception as e:
+                self.logger.error(f"Failed to persist state: {e}")
 
     def get_state(self, key: str, default: Any = None) -> Any:
         """Get a state variable."""
@@ -247,6 +324,8 @@ class AgentFactory:
         provider: Optional[str] = None,
         model: Optional[str] = None,
         config_path: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        memory_service: Optional["MemoryService"] = None,
         **kwargs,
     ) -> BaseAgent:
         """
@@ -258,6 +337,8 @@ class AgentFactory:
             provider: AI provider
             model: Model to use
             config_path: Path to config file
+            conversation_id: Optional conversation ID for persistence
+            memory_service: Optional MemoryService for persistence
             **kwargs: Additional arguments for the agent
 
         Returns:
@@ -280,6 +361,8 @@ class AgentFactory:
             provider=provider,
             model=model,
             config_path=config_path,
+            conversation_id=conversation_id,
+            memory_service=memory_service,
             **kwargs,
         )
 
