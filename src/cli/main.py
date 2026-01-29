@@ -177,6 +177,65 @@ def agents():
 
 
 @app.command()
+def tools(
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Show detailed tool information",
+    ),
+):
+    """List available tools."""
+    try:
+        # Import tools to trigger registration
+        import src.tools  # noqa: F401
+        from src.core import ToolRegistry
+
+        available_tools = ToolRegistry.list_tools()
+
+        console.print("\n[bold]Available Tools:[/bold]\n")
+
+        for tool_name in sorted(available_tools):
+            metadata = ToolRegistry.get_metadata(tool_name)
+            tool_instance = ToolRegistry.create(tool_name)
+
+            # Status marker
+            danger_mark = "[red]⚠[/red] " if metadata.get("dangerous", False) else "[green]✓[/green] "
+
+            # Tool name and description
+            console.print(f"{danger_mark}[cyan]{tool_name}[/cyan]")
+            console.print(f"  {tool_instance.description}")
+
+            # Show category and tags
+            category = metadata.get("category", "general")
+            tags = metadata.get("tags", [])
+            console.print(f"  [dim]Category: {category}[/dim]")
+            if tags:
+                console.print(f"  [dim]Tags: {', '.join(tags)}[/dim]")
+
+            # Verbose mode: show parameters
+            if verbose:
+                console.print(f"  [dim]Parameters:[/dim]")
+                for param in tool_instance.parameters:
+                    required = "[red]*[/red]" if param.required else " "
+                    console.print(
+                        f"    {required} {param.name} ({param.param_type.value}): "
+                        f"{param.description}"
+                    )
+
+            console.print()
+
+        console.print(f"[dim]Total: {len(available_tools)} tools[/dim]")
+        console.print(f"[dim]Use --verbose to see parameter details[/dim]")
+
+    except Exception as e:
+        console.print(f"[red]Error listing tools: {e}[/red]")
+        if verbose:
+            console.print_exception()
+        sys.exit(1)
+
+
+@app.command()
 def version():
     """Show version information."""
     console.print(f"[bold]Agent Toolkit[/bold] v{__version__}")

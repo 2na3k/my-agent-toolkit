@@ -70,6 +70,8 @@ class AIClientWrapper:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         stream: Optional[bool] = None,
+        tools: Optional[List[Dict]] = None,
+        tool_choice: Optional[str] = None,
         **kwargs,
     ) -> Any:
         """
@@ -81,6 +83,8 @@ class AIClientWrapper:
             temperature: Sampling temperature. If None, uses default from config.
             max_tokens: Maximum tokens to generate. If None, uses default from config.
             stream: Whether to stream the response. If None, uses default from config.
+            tools: List of tool schemas for function calling. Optional.
+            tool_choice: Tool choice strategy ("auto", "none", or specific tool). Optional.
             **kwargs: Additional arguments to pass to the API
 
         Returns:
@@ -98,14 +102,25 @@ class AIClientWrapper:
             stream if stream is not None else self.global_settings.get("stream", False)
         )
 
-        return self.client.chat.completions.create(
-            model=model,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            stream=stream,
-            **kwargs,
-        )
+        # Build API kwargs
+        api_kwargs = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "stream": stream,
+        }
+
+        # Add tools if provided
+        if tools:
+            api_kwargs["tools"] = tools
+            if tool_choice:
+                api_kwargs["tool_choice"] = tool_choice
+
+        # Add any additional kwargs
+        api_kwargs.update(kwargs)
+
+        return self.client.chat.completions.create(**api_kwargs)
 
     def chat_completion_stream(
         self,

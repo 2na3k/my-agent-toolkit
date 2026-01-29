@@ -28,6 +28,8 @@ class ConvoAgent(BaseAgent):
         config_path: Optional[str] = None,
         use_router: bool = True,
         router_confidence_threshold: float = 0.7,
+        enable_tools: bool = True,
+        tools: Optional[list] = None,
         **kwargs,
     ):
         """
@@ -40,13 +42,20 @@ class ConvoAgent(BaseAgent):
             config_path: Path to config file
             use_router: Whether to use router for intent detection (default: True)
             router_confidence_threshold: Minimum confidence to route to specialized agent
+            enable_tools: Whether to enable tool calling (default: True)
+            tools: List of tool names available to this agent. If None, uses safe defaults.
             **kwargs: Additional arguments
         """
+        # Default to safe and useful tools
+        default_tools = ["file_read", "bash", "file_list", "grep"]
+
         super().__init__(
             name=name,
             provider=provider,
             model=model,
             config_path=config_path,
+            enable_tools=enable_tools,
+            tools=tools or default_tools,
             **kwargs,
         )
 
@@ -156,12 +165,16 @@ class ConvoAgent(BaseAgent):
         temperature = kwargs.get("temperature", 0.7)
         max_tokens = kwargs.get("max_tokens", 2000)
 
-        # Use the chat method which maintains conversation history
-        response = self.chat(
-            message=input_text,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
+        # Use tool-enabled chat if tools are available
+        if self.enable_tools and self.available_tools:
+            response = self.chat_with_tools(
+                message=input_text, temperature=temperature, max_tokens=max_tokens
+            )
+        else:
+            # Use regular chat method which maintains conversation history
+            response = self.chat(
+                message=input_text, temperature=temperature, max_tokens=max_tokens
+            )
 
         # Extract response text
         if hasattr(response, "choices") and response.choices:

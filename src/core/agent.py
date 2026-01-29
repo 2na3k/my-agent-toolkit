@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, Type, TYPE_CHECKING
+import json
 
 from .client import AIClientWrapper, ClientFactory
 from .logger import get_logger
 
 if TYPE_CHECKING:
     from .memory import MemoryService
+    from .tools.registry import ToolRegistry
+    from .tools.executor import ToolExecutor
+    from .tools.models import ToolResult, ToolCall
 
 
 class BaseAgent(ABC):
@@ -27,6 +31,8 @@ class BaseAgent(ABC):
         config_path: Optional[str] = None,
         conversation_id: Optional[str] = None,
         memory_service: Optional["MemoryService"] = None,
+        tools: Optional[List[str]] = None,
+        enable_tools: bool = False,
         **kwargs,
     ):
         """
@@ -39,6 +45,8 @@ class BaseAgent(ABC):
             config_path: Path to config.yaml. If None, uses default location.
             conversation_id: Optional conversation ID for persistence. If None, no persistence.
             memory_service: Optional MemoryService for persistence. If None, no persistence.
+            tools: List of tool names this agent can use. If None, no tools available.
+            enable_tools: Whether to enable tool calling. Default: False.
             **kwargs: Additional arguments passed to the AI client
         """
         self.name = name
@@ -68,6 +76,18 @@ class BaseAgent(ABC):
         # Agent state
         self.state: Dict[str, Any] = {}
         self.history: List[Dict[str, Any]] = []
+
+        # Tool support
+        self.enable_tools = enable_tools
+        self.available_tools = tools or []
+        self.tool_executor = None
+        self.tool_history: List[Dict] = []
+
+        if self.enable_tools:
+            from .tools.executor import ToolExecutor
+
+            self.tool_executor = ToolExecutor()
+            self.logger.info(f"Tools enabled: {self.available_tools}")
 
         # Load conversation from memory if persistence is enabled
         if self.conversation_id and self.memory_service:
@@ -273,6 +293,145 @@ class BaseAgent(ABC):
         """
         self.logger.info(f"Switching model to {model}")
         self.model = model
+
+    def use_tool(self, tool_name: str, **params) -> "ToolResult":
+        """
+        Manually execute a tool.
+
+        Args:
+            tool_name: Name of the tool to execute
+            **params: Parameters to pass to the tool
+
+        Returns:
+            ToolResult object with execution results
+
+        Raises:
+            RuntimeError: If tools are not enabled for this agent
+        """
+        if not self.enable_tools or not self.tool_executor:
+            raise RuntimeError("Tools not enabled for this agent")
+
+        result = self.tool_executor.execute(tool_name, params)
+
+        # Track in history
+        self.tool_history.append(
+            {"tool": tool_name, "params": params, "result": result}
+        )
+
+        return result
+
+    def chat_with_tools(
+        self,
+        message: str,
+        max_tool_iterations: int = 5,
+        **kwargs,
+    ) -> Any:
+        """
+        Chat with automatic tool calling loop.
+
+        The LLM can request tool calls, which are executed automatically,
+        and results are fed back to the LLM for further processing.
+
+        Args:
+            message: User message to send
+            max_tool_iterations: Maximum number of tool call iterations (default: 5)
+            **kwargs: Additional parameters for chat_completion
+
+        Returns:
+            Final AI response after tool execution loop
+
+        Raises:
+            RuntimeError: If tools are not enabled
+        """
+        if not self.enable_tools or not self.available_tools:
+            # Fall back to regular chat if tools not enabled
+            return self.chat(message, **kwargs)
+
+        from .tools.registry import ToolRegistry
+
+        messages = self._build_messages_with_history(message)
+        tool_schemas = ToolRegistry.get_schemas(self.available_tools)
+
+        for iteration in range(max_tool_iterations):
+            self.logger.debug(f"Tool iteration {iteration + 1}/{max_tool_iterations}")
+
+            # Call LLM with tools
+            response = self.client.chat_completion(
+                messages=messages,
+                model=self.model,
+                tools=tool_schemas,
+                tool_choice="auto",
+                **kwargs,
+            )
+
+            assistant_message = response.choices[0].message
+
+            # Check if LLM wants to call tools
+            if not assistant_message.tool_calls:
+                # No more tool calls - update history and return
+                self._update_history(message, response)
+                return response
+
+            # Add assistant message with tool calls to messages
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": assistant_message.content or "",
+                    "tool_calls": [
+                        {
+                            "id": tc.id,
+                            "type": "function",
+                            "function": {
+                                "name": tc.function.name,
+                                "arguments": tc.function.arguments,
+                            },
+                        }
+                        for tc in assistant_message.tool_calls
+                    ],
+                }
+            )
+
+            # Execute each tool call
+            for tool_call in assistant_message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_params = json.loads(tool_call.function.arguments)
+
+                self.logger.info(f"Executing tool: {tool_name}")
+
+                # Execute tool
+                try:
+                    result = self.use_tool(tool_name, **tool_params)
+
+                    # Add tool result to messages
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(
+                                {
+                                    "success": result.success,
+                                    "output": result.output,
+                                    "error": result.error,
+                                }
+                            ),
+                        }
+                    )
+                except Exception as e:
+                    self.logger.error(f"Tool execution failed: {e}")
+                    # Add error to messages
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.id,
+                            "content": json.dumps(
+                                {"success": False, "output": None, "error": str(e)}
+                            ),
+                        }
+                    )
+
+        # Max iterations reached - return last response
+        self.logger.warning(f"Max tool iterations ({max_tool_iterations}) reached")
+        return response
 
     def __repr__(self) -> str:
         return (

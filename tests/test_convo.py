@@ -267,7 +267,7 @@ class TestConvoAgent:
         mock_client_instance.chat_completion.side_effect = [mock_response1, mock_response2]
         mock_client.return_value = mock_client_instance
 
-        agent = ConvoAgent(provider="claude", use_router=False)
+        agent = ConvoAgent(provider="claude", use_router=False, enable_tools=False)
 
         # First interaction
         agent.run("hello")
