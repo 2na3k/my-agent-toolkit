@@ -83,13 +83,13 @@ class ConfigLoader:
         Get API key for a provider from environment variables.
 
         Args:
-            provider: Provider name (e.g., 'claude', 'gemini', 'openai')
+            provider: Provider name (e.g., 'claude', 'gemini', 'openai', 'ollama')
 
         Returns:
-            API key from environment
+            API key from environment. Returns "not-needed" for local providers.
 
         Raises:
-            ValueError: If API key not found in environment
+            ValueError: If API key not found and provider requires it
         """
         # Map provider names to environment variable names
         env_var_map = {
@@ -98,11 +98,25 @@ class ConfigLoader:
             "openai": "OPENAI_API_KEY",
         }
 
+        # Check if provider config specifies it doesn't need an API key
+        provider_config = self.get_provider_config(provider)
+        requires_api_key = provider_config.get("requires_api_key", True)
+
+        if not requires_api_key:
+            # Local providers like Ollama, LlamaCpp don't need API keys
+            return "not-needed"
+
+        # Try to get env var from map, or use convention: {PROVIDER}_API_KEY
         env_var = env_var_map.get(provider.lower())
         if not env_var:
-            raise ValueError(f"Unknown provider: {provider}")
+            # Convention-based: PROVIDER_API_KEY (e.g., OLLAMA_API_KEY)
+            env_var = f"{provider.upper()}_API_KEY"
 
         api_key = os.getenv(env_var)
+        if not api_key:
+            # Check if there's a default_api_key in provider config (for testing)
+            api_key = provider_config.get("default_api_key")
+
         if not api_key:
             raise ValueError(
                 f"API key not found in environment. "

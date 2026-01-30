@@ -29,6 +29,41 @@ providers:
     timeout: 60
     max_retries: 3
 
+  # Custom local providers (examples)
+  ollama:
+    base_url: "http://localhost:11434/v1/"
+    default_model: "qwen2.5:latest"
+    models:
+      - "qwen2.5:latest"
+      - "llama3.2:latest"
+      - "mistral:latest"
+      - "phi3:latest"
+    timeout: 120
+    max_retries: 2
+    requires_api_key: false  # Local provider, no API key needed
+    default_api_key: "not-needed"  # Dummy key for OpenAI SDK compatibility
+
+  llamacpp:
+    base_url: "http://localhost:8080/v1/"
+    default_model: "local-model"
+    models:
+      - "local-model"
+    timeout: 120
+    max_retries: 2
+    requires_api_key: false  # Local provider, no API key needed
+    default_api_key: "not-needed"  # Dummy key for OpenAI SDK compatibility
+
+  # LM Studio (another popular local option)
+  lmstudio:
+    base_url: "http://localhost:1234/v1/"
+    default_model: "local-model"
+    models:
+      - "local-model"
+    timeout: 120
+    max_retries: 2
+    requires_api_key: false
+    default_api_key: "not-needed"
+
 # Default provider to use
 default_provider: "gemini"
 

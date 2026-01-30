@@ -690,3 +690,80 @@ rm -rf **/__pycache__
 # Run tests again
 pytest -v
 ```
+
+## Custom Provider Integration
+
+The toolkit supports **any OpenAI-compatible API provider**, including local LLM runners and custom endpoints.
+
+### Built-in Provider Examples
+
+The `config.yaml` includes example configurations for popular local providers:
+
+- **Ollama** (localhost:11434) - Most popular local LLM runner
+- **LlamaCpp** (localhost:8080) - C++ implementation
+- **LM Studio** (localhost:1234) - GUI-based local runner
+
+### Quick Start with Ollama
+
+```bash
+# Install and start Ollama
+ollama serve
+
+# Pull a model with function calling support
+ollama pull qwen2.5:latest
+
+# Use with the toolkit
+aa chat --provider ollama --model qwen2.5:latest
+> run the command: ls -la
+```
+
+### Adding Custom Providers
+
+1. **Add provider to `config.yaml`**:
+
+```yaml
+providers:
+  my_provider:
+    base_url: "http://localhost:PORT/v1/"
+    default_model: "model-name"
+    requires_api_key: false  # For local providers
+    default_api_key: "not-needed"
+    timeout: 120
+```
+
+2. **Use in CLI**:
+
+```bash
+aa chat --provider my_provider
+```
+
+3. **Use in code**:
+
+```python
+agent = AgentFactory.create("convo", provider="my_provider")
+```
+
+### Tool Support with Custom Providers
+
+Tools work with **any provider that supports OpenAI function calling format**. This includes:
+
+✅ **Compatible Models**:
+- Ollama: qwen2.5, llama3.2, mistral
+- LlamaCpp: With `--chat-format functionary`
+- LM Studio: Check model compatibility
+- vLLM: Built-in support
+
+⚠️ **Limitations**:
+- Older models may not support function calling
+- Some local providers require specific configuration
+- Performance varies based on hardware
+
+### Detailed Guide
+
+See **[CUSTOM_PROVIDERS.md](CUSTOM_PROVIDERS.md)** for:
+- Complete setup instructions for Ollama, LlamaCpp, LM Studio
+- Function calling compatibility matrix
+- Troubleshooting common issues
+- Advanced configuration options
+- Example use cases
+

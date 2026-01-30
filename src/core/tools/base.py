@@ -129,6 +129,15 @@ class BaseTool(ABC):
 
         return schema
 
+    def get_schema(self) -> Dict[str, Any]:
+        """
+        Alias for to_openai_schema() for consistency.
+
+        Returns:
+            Dictionary following OpenAI function calling format
+        """
+        return self.to_openai_schema()
+
     def _validate_definition(self):
         """
         Validate that tool is properly defined.
