@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
-import { MessageSquare, Bot, Settings, Search, ChevronLeft, Menu } from 'lucide-react';
+import { MessageSquare, Bot, Settings, Search, ChevronLeft, Menu, Wrench } from 'lucide-react';
 import clsx from 'clsx';
 import { useState } from 'react';
 
@@ -35,6 +35,7 @@ function Sidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: (c
     const navItems = [
         { icon: MessageSquare, label: 'Chat', path: '/' },
         { icon: Bot, label: 'Agents', path: '/agents' },
+        { icon: Wrench, label: 'Tools', path: '/tools' },
         { icon: Settings, label: 'Settings', path: '/settings' },
     ];
 

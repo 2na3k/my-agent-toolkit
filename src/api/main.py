@@ -8,8 +8,11 @@ from datetime import datetime
 from src.core import AgentFactory, BaseAgent
 from src.core.db import DatabaseManager
 from src.core.memory import MemoryService
+from src.core.tools import ToolRegistry
 # Import all agents to ensure they are registered
 import src.agents
+# Import all tools to ensure they are registered
+import src.tools
 
 from logging import getLogger
 
@@ -65,6 +68,17 @@ class AgentInfo(BaseModel):
     id: str
     description: str = ""
     metadata: Dict[str, Any] = {}
+
+
+class ToolInfo(BaseModel):
+    """Information about an available tool."""
+    name: str
+    description: str
+    category: str
+    tags: List[str]
+    dangerous: bool
+    enabled: bool
+    parameters: List[Dict[str, Any]]
 
 
 class ConversationCreate(BaseModel):
@@ -136,6 +150,48 @@ async def list_agents():
             metadata=meta
         ))
     return agents
+
+
+@app.get("/tools", response_model=List[ToolInfo])
+async def list_tools():
+    """List all available tools with their metadata."""
+    tool_names = ToolRegistry.list_tools(enabled_only=False)
+    tools = []
+
+    for tool_name in tool_names:
+        try:
+            tool_instance = ToolRegistry.create(tool_name)
+            metadata = ToolRegistry.get_metadata(tool_name)
+
+            # Convert parameters to dict format
+            parameters = []
+            for param in tool_instance.parameters:
+                param_dict = {
+                    "name": param.name,
+                    "type": param.param_type.value,
+                    "description": param.description,
+                    "required": param.required,
+                }
+                if param.default is not None:
+                    param_dict["default"] = param.default
+                if param.enum is not None:
+                    param_dict["enum"] = param.enum
+                parameters.append(param_dict)
+
+            tools.append(ToolInfo(
+                name=tool_name,
+                description=tool_instance.description,
+                category=metadata.get("category", "general"),
+                tags=metadata.get("tags", []),
+                dangerous=metadata.get("dangerous", False),
+                enabled=metadata.get("enabled", True),
+                parameters=parameters
+            ))
+        except Exception as e:
+            logger.warning(f"Failed to load tool {tool_name}: {e}")
+            continue
+
+    return tools
 
 
 # ============================================================================
